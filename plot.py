@@ -5,12 +5,19 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerTuple
 from lifelines import KaplanMeierFitter
 plt.rcParams['text.usetex'] = True
 
 # Define directory paths
 PATH = os.path.dirname(os.path.abspath(__file__)) + "/"
 RESULTS_DIR = os.path.join(PATH, "results")
+FIGURES_DIR = os.path.join(PATH, "figures")
+
+# Create figures directory if it doesn't exist
+os.makedirs(FIGURES_DIR, exist_ok=True)
+
 
 
 def KM_survival(time, status):
@@ -44,11 +51,9 @@ def KM_survival(time, status):
     return mean_survival_time
 
 def plot_cumu_regrets():
-    #cumu_regrets_largest_colab = np.loadtxt('cumu_regrets_largest_prediction_x_correct.csv', delimiter=',')
-    cumu_regrets_largest_colab = np.loadtxt('cumu_regrets_largest_prediction_x_4_10_55.csv', delimiter=',')
+    cumu_regrets_largest_colab = np.loadtxt(os.path.join(RESULTS_DIR, 'cumu_regrets_largest_prediction.csv'), delimiter=',')
     
-    #cumu_regrets_largest_solo = np.loadtxt('cumu_regrets_solo_largest_prediction_x_0.csv', delimiter=',')
-    cumu_regrets_largest_solo = np.loadtxt('cumu_regrets_solo_largest_prediction_x_4_10_55.csv', delimiter=',')
+    cumu_regrets_largest_solo = np.loadtxt(os.path.join(RESULTS_DIR, 'cumu_regrets_solo_largest_prediction.csv'), delimiter=',')
 	
     row_size = cumu_regrets_largest_colab.shape[0]
     fig = plt.figure(figsize=(15,9))
@@ -76,12 +81,12 @@ def plot_cumu_regrets():
         # x-axis for plotting
         trials = list(range(cumu_regrets_largest_colab.shape[1]))
         trials = [i+1 for i in trials]
-        ax.plot(trials, np.cumsum(cumu_regrets_largest_colab[i,:]), 
-				marker='p', label='Collaborative')
-		
+        ax.plot(trials, np.cumsum(cumu_regrets_largest_colab[i,:]),
+				marker='o', label='Collaborative')
+
 		# Plot cumulative sum of regrets for solo
-        ax.plot(trials, np.cumsum(cumu_regrets_largest_solo[i,:]), 
-				marker='p', label='Non-collaborative')
+        ax.plot(trials, np.cumsum(cumu_regrets_largest_solo[i,:]),
+				marker='s', label='Non-collaborative')
 		
         if i >= 5:
             ax.set_xlabel("Number of Trials", fontsize=axisLabel_FS)
@@ -90,7 +95,8 @@ def plot_cumu_regrets():
             ax.set_ylabel("Cumulative Regrets", fontsize=axisLabel_FS)
         
         ax.set_title("Printer ${}$".format(i+1), fontsize=title_FS)
-        ax.set_xlim(0,20)
+        ax.set_xlim(0, 20)
+        ax.set_ylim(ylim_min, ylim_max)
         ax.grid(True)
 		
         if i == 5:
@@ -101,13 +107,13 @@ def plot_cumu_regrets():
         ax.tick_params(axis='both', which='minor', labelsize=tickLabel_FS)
 			
     fig.tight_layout()
-    fig.savefig('Seq_matrix_completion_x_axis_col_3.png', format='png', dpi=400)
+    fig.savefig(os.path.join(FIGURES_DIR, 'Seq_matrix_completion_case_1.png'), format='png', dpi=400)
 
 def plot_subset_seq_mc():
-    cumu_regrets_largest_colab = np.loadtxt('sub_cumu_regrets_largest_prediction_x.csv', delimiter=',')
-    cumu_regrets_largest_solo = np.loadtxt('sub_cumu_regrets_solo_largest_prediction_x.csv', delimiter=',')
-    chosen_indicator_matrix = np.loadtxt('sub_cumu_chosen_x.csv', delimiter=',')
-    chosen_indicator_matrix_no_colab = np.loadtxt('sub_cumu_chosen_no_colab_x.csv', delimiter=',')
+    cumu_regrets_largest_colab = np.loadtxt(os.path.join(RESULTS_DIR, 'sub_cumu_regrets_largest_prediction.csv'), delimiter=',')
+    cumu_regrets_largest_solo = np.loadtxt(os.path.join(RESULTS_DIR, 'sub_cumu_regrets_solo_largest_prediction.csv'), delimiter=',')
+    chosen_indicator_matrix = np.loadtxt(os.path.join(RESULTS_DIR, 'sub_cumu_chosen.csv'), delimiter=',')
+    chosen_indicator_matrix_no_colab = np.loadtxt(os.path.join(RESULTS_DIR, 'sub_cumu_chosen_no_colab.csv'), delimiter=',')
 	
     row_size = cumu_regrets_largest_colab.shape[0]
     fig = plt.figure(figsize=(15,9)) # 15,11
@@ -136,18 +142,56 @@ def plot_subset_seq_mc():
         trials = [i+1 for i in trials]
 		
 		# Plot cumulative sum of regrets for collaboration
-        ax.plot(trials, cumu_regrets_largest_colab[i,:], 
-				marker='o', label='Collab.') # marker='p'
-        not_chosen_idxs = np.where(chosen_indicator_matrix[i,:] == 0)[0]
-        
-        ax.plot(not_chosen_idxs + np.ones(not_chosen_idxs.shape, dtype=int), cumu_regrets_largest_colab[i, not_chosen_idxs], 'rx')
-		
+        # Create full regret array with forward-fill for not-selected trials
+        regret_colab_full = np.zeros(len(trials))
+        last_regret_colab = 0
+        for trial_idx in range(len(trials)):
+            if chosen_indicator_matrix[i, trial_idx] == 1:
+                # Selected: use actual cumulative regret
+                regret_colab_full[trial_idx] = cumu_regrets_largest_colab[i, trial_idx]
+                last_regret_colab = regret_colab_full[trial_idx]
+            else:
+                # Not selected: carry forward last regret value
+                regret_colab_full[trial_idx] = last_regret_colab
+
+        # Separate chosen and not-chosen trials for marker styling
+        chosen_idxs_colab = np.where(chosen_indicator_matrix[i,:] == 1)[0]
+        not_chosen_idxs_colab = np.where(chosen_indicator_matrix[i,:] == 0)[0]
+
+        # Plot all trials with line
+        ax.plot(trials, regret_colab_full, '-', color='tab:blue', linewidth=1)
+        # Plot chosen trials with solid circles
+        ax.plot(chosen_idxs_colab + 1, regret_colab_full[chosen_idxs_colab],
+                'o', color='tab:blue', markerfacecolor='tab:blue', markersize=6, label='Collab.')
+        # Plot not-chosen trials with hollow circles (no label - will be in custom legend)
+        ax.plot(not_chosen_idxs_colab + 1, regret_colab_full[not_chosen_idxs_colab],
+                'o', color='tab:blue', markerfacecolor='none', markeredgewidth=1.5, markersize=6)
+
 		# Plot cumulative sum of regrets for solo
-        ax.plot(trials, cumu_regrets_largest_solo[i,:], 
-				marker='s', label='Non-collab.') # marker='p'
+        # Create full regret array with forward-fill for not-selected trials
+        regret_solo_full = np.zeros(len(trials))
+        last_regret_solo = 0
+        for trial_idx in range(len(trials)):
+            if chosen_indicator_matrix_no_colab[i, trial_idx] == 1:
+                # Selected: use actual cumulative regret
+                regret_solo_full[trial_idx] = cumu_regrets_largest_solo[i, trial_idx]
+                last_regret_solo = regret_solo_full[trial_idx]
+            else:
+                # Not selected: carry forward last regret value
+                regret_solo_full[trial_idx] = last_regret_solo
+
+        # Separate chosen and not-chosen trials for marker styling
+        chosen_idxs_solo = np.where(chosen_indicator_matrix_no_colab[i,:] == 1)[0]
         not_chosen_idxs_solo = np.where(chosen_indicator_matrix_no_colab[i,:] == 0)[0]
-        
-        ax.plot(not_chosen_idxs_solo + np.ones(not_chosen_idxs_solo.shape, dtype=int), cumu_regrets_largest_solo[i, not_chosen_idxs_solo], 'rx', label='Not Selected')
+
+        # Plot all trials with line
+        ax.plot(trials, regret_solo_full, '-', color='tab:orange', linewidth=1)
+        # Plot chosen trials with solid squares
+        ax.plot(chosen_idxs_solo + 1, regret_solo_full[chosen_idxs_solo],
+                's', color='tab:orange', markerfacecolor='tab:orange', markersize=6, label='Non-collab.')
+        # Plot not-chosen trials with hollow squares (no label - will be in custom legend)
+        ax.plot(not_chosen_idxs_solo + 1, regret_solo_full[not_chosen_idxs_solo],
+                's', color='tab:orange', markerfacecolor='none', markeredgewidth=1.5, markersize=6)
 		
 		
         if i >= 5:
@@ -158,18 +202,38 @@ def plot_subset_seq_mc():
         
         ax.set_title("Printer ${}$".format(i+1), fontsize=title_FS)
         ax.set_ylim(ylim_min, ylim_max)
-        ax.set_xlim(0,20) 
+        ax.set_xlim(0,20)
         ax.grid(True)
-		
+
         if i == 5:
-            ax.legend(loc='upper left', fontsize=legendLabel_FS)
+            # Create custom legend with combined "Not Selected" entry using HandlerTuple
+
+            # Create line handles for the legend
+            h_collab = Line2D([0], [0], marker='o', color='tab:blue', linestyle='-',
+                             markerfacecolor='tab:blue', markersize=6)
+            h_noncollab = Line2D([0], [0], marker='s', color='tab:orange', linestyle='-',
+                                markerfacecolor='tab:orange', markersize=6)
+            h_not_selected_circle = Line2D([0], [0], marker='o', color='tab:blue', linestyle='none',
+                                          markerfacecolor='none', markeredgewidth=1.5, markersize=6)
+            h_not_selected_square = Line2D([0], [0], marker='s', color='tab:orange', linestyle='none',
+                                          markerfacecolor='none', markeredgewidth=1.5, markersize=6)
+
+            # Create legend with tuple for "Not Selected"
+            ax.legend(
+                handles=[h_collab, h_noncollab, (h_not_selected_circle, h_not_selected_square)],
+                labels=['Collab.', 'Non-collab.', 'Not Selected'],
+                handler_map={tuple: HandlerTuple(ndivide=None)},
+                handlelength=4,
+                loc='upper left',
+                fontsize=legendLabel_FS
+            )
         
         # Set tick label font size
         ax.tick_params(axis='both', which='major', labelsize=tickLabel_FS)
         ax.tick_params(axis='both', which='minor', labelsize=tickLabel_FS)
-			
+
     fig.tight_layout()
-    fig.savefig('Sub_Seq_matrix_completion_x_2.png', format='png', dpi=400)
+    fig.savefig(os.path.join(FIGURES_DIR, 'Sub_Seq_matrix_completion_case_2.png'), format='png', dpi=400)
 
 
 def KM_survival_seq_mc():
@@ -448,13 +512,13 @@ def plot_combined_sim_cases(configs):
 
     # Save the figure
     filename = 'Seq_MC_sim_combined_cases.png'
-    fig.savefig(filename, format='png', dpi=400, bbox_inches='tight')
+    fig.savefig(os.path.join(FIGURES_DIR, filename), format='png', dpi=400, bbox_inches='tight')
 
     return fig
 
 if __name__ == '__main__':
-	#plot_cumu_regrets()
-    #plot_subset_seq_mc()
+    plot_cumu_regrets()
+    plot_subset_seq_mc()
 
     # Filename Format: r_K_l_r-true_r-exp_zeta_M
     configs = []
