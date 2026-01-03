@@ -11,7 +11,7 @@ This repository contains a Python implementation for "[A collaborative process p
 
 The implementation consists of three main components organized in a modular pipeline:
 
-1. **Data Generation** (`generate_random_matrix.py`): Generates synthetic matrices with controlled rank structure and masking patterns.
+1. **Data Generation** (`generate_random_matrix.py`): Generates synthetic matrices with controlled rank structure and masking patterns for simulation studies.
 2. **Simulation** (`seq_fed_matrix_completion_sim.py`): Runs sequential matrix completion for simulation studies (Section 3) with both collaborative and non-collaborative strategies.
 2. **Experiments** (`seq_fed_matrix_completion_exp.py`): Runs sequential matrix completion for experimental data (Section 4) with both collaborative and non-collaborative strategies.
 3. **Plotting** (`plot.py`): Creates LaTeX-formatted plots for comparative analyses.
@@ -20,7 +20,7 @@ The implementation consists of three main components organized in a modular pipe
 
 ```
 ./
-├── generate_random_matrix.py      # Data generation module
+├── generate_random_matrix.py      # Data generation (simulation)
 ├── seq_fed_matrix_completion_sim.py   # Main - simulation studies
 ├── seq_fed_matrix_completion_exp.py   # Main - experimental studies
 ├── sequential_python_als.py         # ALS implementation
@@ -30,6 +30,8 @@ The implementation consists of three main components organized in a modular pipe
 │   ├── FPy_random_matrix_*.csv
 │   ├── FPy_random_matrix_*_row_mapping.json
 │   ├── FPy_masking_metadata_*pct.json
+│   ├── full_*_mat.txt
+│   ├── print_time_matr.txt
 │   └── nU_exp.csv
 │
 ├── results/                         # Results
@@ -225,7 +227,7 @@ python plot.py
 
 ### Running Experimental Studies
 
-For experimental studies using experimental data (Section 4), ensure you have the experimental data file `U_exp.csv` in the `data/` directory, then run:
+For experimental studies using experimental data (Section 4), ensure you have the experimental data file `nU_exp.csv` in the `data/` directory, then run:
 
 ```bash
 python seq_fed_matrix_completion_exp.py
