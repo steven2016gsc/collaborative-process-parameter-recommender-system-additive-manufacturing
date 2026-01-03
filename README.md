@@ -5,7 +5,7 @@
     <a style="text-decoration:none !important;" href="https://opensource.org/licenses/MIT" alt="License"><img src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 </p>
 
-This repository contains a Python implementation for "[A collaborative process parameter recommender system for fleets of networked manufacturing machines --- with application to 3D printing](https://arxiv.org/abs/2506.12252)". The codebase simulates collaborative and non-collaborative approaches to matrix completion using Alternating Least Squares (ALS) and evaluates their performance through various metrics including terminal cumulative regret and expected number of trials to optimal.
+This repository contains a Python implementation for "[A collaborative process parameter recommender system for fleets of networked manufacturing machines --- with application to 3D printing](https://doi.org/10.1016/j.jmsy.2025.12.028)". The codebase simulates collaborative and non-collaborative approaches to matrix completion using Alternating Least Squares (ALS) and evaluates their performance through various metrics including terminal cumulative regret and expected number of trials to optimal.
 
 ## Overview
 
