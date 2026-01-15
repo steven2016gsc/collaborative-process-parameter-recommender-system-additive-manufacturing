@@ -241,13 +241,15 @@ python seq_fed_matrix_completion_exp.py
 If you use this code in your research, please cite:
 
 ```bibtex
-@misc{wang2025collab,
-      title={A Collaborative Process Parameter Recommender System for Fleets of Networked Manufacturing Machines -- with Application to 3D Printing}, 
-      author={Weishi Wang and Sicong Guo and Chenhuan Jiang and Mohamed Elidrisi and Myungjin Lee and Harsha V. Madhyastha and Raed Al Kontar and Chinedum E. Okwudire},
-      year={2025},
-      eprint={2506.12252},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
+@article{GUO202622,
+title = {A collaborative process parameter recommender system for fleets of networked manufacturing machines — with application to 3D printing},
+author = {Sicong Guo and Weishi Wang and Chenhuan Jiang and Mohamed Elidrisi and Myungjin Lee and Harsha V. Madhyastha and Raed {Al Kontar} and Chinedum E. Okwudire},
+journal = {Journal of Manufacturing Systems},
+volume = {85},
+pages = {22-33},
+year = {2026},
+issn = {0278-6125},
+doi = {https://doi.org/10.1016/j.jmsy.2025.12.028},
 }
 ```
 
